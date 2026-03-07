@@ -17,6 +17,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/Register.vue')
   },
   {
+    path: '/select-role',
+    component: () => import('@/views/SelectRole.vue')
+  },
+  {
     path: '/tabs/',
     component: TabsPage,
     children: [
