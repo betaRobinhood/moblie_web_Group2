@@ -1,0 +1,7 @@
+{
+  "name": "ezydine",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
