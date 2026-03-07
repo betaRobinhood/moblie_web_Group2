@@ -1,0 +1,45 @@
+{
+    "common": {
+        "welcome": "Welcome",
+        "login": "Login",
+        "logout": "Logout",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "cancel": "Cancel",
+        "profile": "Profile"
+    },
+    "auth": {
+        "phone": "Phone Number",
+        "email": "Email",
+        "password": "Password",
+        "login_button": "Sign In",
+        "register_button": "Sign Up",
+        "no_account": "Don't have an account?",
+        "have_account": "Already have an account?",
+        "full_name": "Full Name",
+        "avatar": "Profile Picture",
+        "register_success": "Registration successful!",
+        "passwords_mismatch": "Passwords do not match",
+        "role": "Account Role",
+        "logout_confirm": "Are you sure you want to logout?"
+    },
+    "queue": {
+        "join": "Join Queue",
+        "current_position": "Your Position",
+        "est_wait": "Estimated Waiting Time",
+        "mins": "mins",
+        "status": {
+            "waiting": "Waiting",
+            "called": "Called",
+            "seated": "Seated",
+            "skipped": "Skipped",
+            "completed": "Completed"
+        }
+    },
+    "menu": {
+        "add_to_cart": "Add to Cart",
+        "checkout": "Checkout",
+        "total": "Total"
+    }
+}

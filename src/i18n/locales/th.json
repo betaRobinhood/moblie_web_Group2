@@ -1,0 +1,45 @@
+{
+    "common": {
+        "welcome": "ยินดีต้อนรับ",
+        "login": "เข้าสู่ระบบ",
+        "logout": "ออกจากระบบ",
+        "loading": "กำลังโหลด...",
+        "error": "เกิดข้อผิดพลาด",
+        "save": "บันทึก",
+        "cancel": "ยกเลิก",
+        "profile": "โปรไฟล์"
+    },
+    "auth": {
+        "phone": "หมายเลขโทรศัพท์",
+        "email": "อีเมล",
+        "password": "รหัสผ่าน",
+        "login_button": "เข้าสู่ระบบ",
+        "register_button": "ลงทะเบียน",
+        "no_account": "ยังไม่มีบัญชี?",
+        "have_account": "มีบัญชีอยู่แล้ว?",
+        "full_name": "ชื่อ-นามสกุล",
+        "avatar": "รูปโปรไฟล์",
+        "register_success": "ลงทะเบียนสำเร็จ!",
+        "passwords_mismatch": "รหัสผ่านไม่ตรงกัน",
+        "role": "สิทธิความปลอดภัย",
+        "logout_confirm": "คุณต้องการออกจากระบบใช่หรือไม่?"
+    },
+    "queue": {
+        "join": "จองคิว",
+        "current_position": "ลำดับของคุณ",
+        "est_wait": "ระยะเวลารอโดยประมาณ",
+        "mins": "นาที",
+        "status": {
+            "waiting": "กำลังรอ",
+            "called": "เรียกคิว",
+            "seated": "นั่งโต๊ะ",
+            "skipped": "ข้ามคิว",
+            "completed": "เสร็จสิ้น"
+        }
+    },
+    "menu": {
+        "add_to_cart": "เพิ่มลงตะกร้า",
+        "checkout": "ชำระเงิน",
+        "total": "รวมทั้งหมด"
+    }
+}

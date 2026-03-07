@@ -12,16 +12,26 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
     "@capacitor/app": "8.0.1",
+    "@capacitor/barcode-scanner": "^3.0.2",
+    "@capacitor/camera": "^8.0.2",
     "@capacitor/core": "8.2.0",
     "@capacitor/haptics": "8.0.1",
     "@capacitor/keyboard": "8.0.1",
+    "@capacitor/preferences": "^8.0.1",
     "@capacitor/status-bar": "8.0.1",
+    "@cloudinary/url-gen": "^1.22.0",
+    "@cloudinary/vue": "^1.13.4",
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
     "firebase": "^12.10.0",
+    "html5-qrcode": "^2.3.8",
     "ionicons": "^7.0.0",
+    "pinia": "^3.0.4",
+    "qrcode.vue": "^3.8.0",
     "vue": "^3.3.0",
+    "vue-i18n": "^9.14.5",
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
