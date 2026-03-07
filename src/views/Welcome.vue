@@ -84,7 +84,7 @@ const skipOnboarding = () => {
 
 const finishOnboarding = () => {
   console.log('ไปที่หน้าเข้าสู่ระบบ หรือหน้าหลัก');
-  router.push('/tabs/tab1'); 
+  router.push('/login');
 };
 </script>
 
