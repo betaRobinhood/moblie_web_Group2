@@ -1,12 +1,20 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import TabsPage from '../views/TabsPage.vue';
-import Welcome from '../views/Welcome.vue'; 
+import Welcome from '../views/Welcome.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     component: Welcome // 2. เปลี่ยนให้แสดงหน้า Welcome เป็นหน้าแรกสุด
+  },
+  {
+    path: '/login',
+    component: () => import('@/views/Login.vue')
+  },
+  {
+    path: '/register',
+    component: () => import('@/views/Register.vue')
   },
   {
     path: '/tabs/',
