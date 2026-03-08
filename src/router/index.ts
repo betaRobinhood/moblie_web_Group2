@@ -25,7 +25,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/select-role',
-    component: () => import('@/views/SelectRole.vue')
+    component: () => import('@/views/SelectRole.vue'),
+    meta: { requiresAuth: true }
   },
 
   // ==========================================
@@ -150,7 +151,7 @@ const getCurrentUser = () => {
 // ==========================================
 router.beforeEach(async (to, _from, next) => {
   const requiresAuth = to.meta.requiresAuth;
-  
+
   // 1. ดึงข้อมูล User จาก Firebase อย่างปลอดภัย
   const user: any = await getCurrentUser();
 

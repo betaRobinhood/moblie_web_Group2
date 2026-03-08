@@ -62,7 +62,7 @@ const handleSubmit = async () => {
 
   if (result.success) {
     alert("สมัครสมาชิกสำเร็จ!");
-    router.push('/login');
+    router.push('/select-role');
   } else {
     alert(result.message);
   }
