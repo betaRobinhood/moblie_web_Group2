@@ -1,47 +1,74 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import { auth } from '../services/firebase';
-import Welcome from '@/views/Welcome.vue'; // 1. นำเข้า Welcome.vue
+
+// 1. นำเข้า getAuth และ onAuthStateChanged เพื่อดึง Session
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+// 2. นำเข้า getUserProfile จาก Service เพื่อเช็คสิทธิ์ (Role)
+import { getUserProfile } from '../services/authService';
+// 3. นำเข้า Layout ของ Navbar ลูกค้า
+import CustomerTabs from '../views/customer/CustomerTabs.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    component: Welcome // 2. เปลี่ยนให้แสดงหน้า Welcome เป็นหน้าแรกสุด
+    component: () => import('@/views/Welcome.vue')
   },
   {
     path: '/login',
+    name: 'Login',
     component: () => import('@/views/Login.vue')
   },
   {
     path: '/register',
+    name: 'Register',
     component: () => import('@/views/Register.vue')
   },
   {
     path: '/select-role',
     component: () => import('@/views/SelectRole.vue')
   },
+
+  // ==========================================
+  // กลุ่มของลูกค้า (มี Navbar ด้านล่าง)
+  // ==========================================
   {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/Login.vue')
+    path: '/tabs',
+    component: CustomerTabs,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '/home', // ใช้ /home ตรงๆ เพื่อให้ URL สวยงามและเข้าถึงง่าย
+        name: 'Home',
+        component: () => import('../views/customer/HomeView.vue'),
+        meta: { customerOnly: true }
+      },
+      {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('../views/ProfileView.vue'),
+      },
+      {
+        path: '/my-queue',
+        name: 'QueueStatus',
+        component: () => import('../views/customer/QueueStatusView.vue'),
+        meta: { customerOnly: true }
+      },
+      {
+        path: '/cart',
+        name: 'Cart',
+        component: () => import('../views/customer/CartView.vue'),
+      },
+      {
+        path: '/notifications',
+        name: 'Notifications',
+        component: () => import('../views/customer/NotificationsView.vue'),
+      }
+    ]
   },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('../views/Register.vue')
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('../views/ProfileView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/home',
-    name: 'Home',
-    component: () => import('../views/customer/HomeView.vue'),
-    meta: { requiresAuth: true, customerOnly: true }
-  },
+
+  // ==========================================
+  // หน้ารายละเอียด (ไม่มี Navbar ด้านล่าง จะได้จอใหญ่ๆ)
+  // ==========================================
   {
     path: '/restaurant/:id',
     name: 'RestaurantDetail',
@@ -54,18 +81,17 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/customer/MenuView.vue'),
     meta: { requiresAuth: true }
   },
+
   {
-    path: '/my-queue',
-    name: 'QueueStatus',
-    component: () => import('../views/customer/QueueStatusView.vue'),
-    meta: { requiresAuth: true, customerOnly: true }
-  },
-  {
-    path: '/cart',
-    name: 'Cart',
-    component: () => import('../views/customer/CartView.vue'),
+    path: '/restaurant/:id/cart',
+    name: 'RestaurantCart',
+    component: () => import('../views/customer/RestaurantCartView.vue'),
     meta: { requiresAuth: true }
   },
+
+  // ==========================================
+  // กลุ่มของพนักงาน (ไม่มี Navbar ของลูกค้า)
+  // ==========================================
   {
     path: '/staff/dashboard',
     name: 'StaffDashboard',
@@ -103,43 +129,65 @@ const router = createRouter({
   routes
 });
 
-// Navigation guard
+// ==========================================
+// ฟังก์ชันรอให้ Firebase โหลด Session เสร็จก่อน
+// ==========================================
+const getCurrentUser = () => {
+  return new Promise((resolve, reject) => {
+    const removeListener = onAuthStateChanged(
+      getAuth(),
+      (user) => {
+        removeListener();
+        resolve(user);
+      },
+      reject
+    );
+  });
+};
+
+// ==========================================
+// Navigation guard (ยามเฝ้าประตู)
+// ==========================================
 router.beforeEach(async (to, _from, next) => {
   const requiresAuth = to.meta.requiresAuth;
-  const user = auth.currentUser;
+  
+  // 1. ดึงข้อมูล User จาก Firebase อย่างปลอดภัย
+  const user: any = await getCurrentUser();
 
+  // 2. ถ้าหน้าที่กำลังจะไป "ต้องล็อกอิน" แต่ "ยังไม่ได้ล็อกอิน" -> เตะไป Login
   if (requiresAuth && !user) {
     return next('/login');
   }
 
-  // If user is logged in, check role for redirection
+  // 3. ถ้าล็อกอินอยู่แล้ว ให้ทำการเช็คสิทธิ์ (Role)
   if (user) {
-    // We need the userStore to check profile role
-    // Dynamic import to avoid circular dependency if any
-    const { useUserStore } = await import('../stores/userStore');
-    const userStore = useUserStore();
+    // ดึงข้อมูล Role จาก Firestore
+    const profileRes = await getUserProfile(user.uid);
+    // สมมติว่าในระบบลูกค้าทั่วไปชื่อ 'user' หรือ 'customer'
+    const role = profileRes.success && profileRes.data ? profileRes.data.role : 'customer';
 
-    // Wait for profile to load if it's still loading
-    if (userStore.loading) {
-      // Small delay or recursive call could be needed, but usually initialize() is called in main.ts
-      // For simplicity, we assume profile is being fetched.
+    // จัดการการเตะ (Redirect) เมื่อผู้ใช้ที่ล็อกอินแล้ว พยายามเข้าหน้าแรก หรือ หน้าล็อกอิน
+    if (to.path === '/' || to.path === '/login' || to.path === '/register') {
+      if (role === 'admin' || role === 'staff') {
+        return next('/staff/dashboard');
+      } else {
+        return next('/home');
+      }
     }
 
-    const role = userStore.profile?.role;
-
-    // 1. If Admin/Staff tries to access customer-only pages (like Home), redirect to Staff Dashboard
+    // กฎสำหรับแอดมิน/พนักงาน: ห้ามเข้าหน้าของลูกค้า
     if (to.meta.customerOnly && (role === 'admin' || role === 'staff')) {
       return next('/staff/dashboard');
     }
 
-    // 2. If Customer tries to access staff-only pages, redirect to Home
-    if (to.meta.staffOnly && role === 'customer') {
+    // กฎสำหรับลูกค้า: ห้ามเข้าหน้าของพนักงาน
+    if (to.meta.staffOnly && (role === 'customer' || role === 'user')) {
       return next('/home');
     }
   }
 
+  // ผ่านเงื่อนไขทั้งหมด ให้ไปหน้าที่ต้องการได้
   next();
 });
 
 export default router;
-

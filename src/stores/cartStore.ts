@@ -6,6 +6,7 @@ export const useCartStore = defineStore('cart', {
         items: [] as OrderItem[],
         restaurantId: null as string | null,
         tableId: null as string | null
+        
     }),
     getters: {
         totalPrice: (state) => state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0),

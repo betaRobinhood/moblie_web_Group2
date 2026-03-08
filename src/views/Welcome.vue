@@ -27,7 +27,7 @@
           <h2 class="title-thai">จองคิว ดูคิว สั่งอาหาร<br>ครบจบในที่เดียว</h2>
           
           <div class="image-circle">
-             <img src="/public/assets/1.png" alt="Chef">
+             <img src="../assets/1.png" alt="Chef">
           </div>
         </div>
 
@@ -43,7 +43,7 @@
 
         <div class="content-center">
           <div class="image-circle">
-             <img src="/public/assets/2.png" alt="Restaurants">
+             <img src="../assets/2.png" alt="Restaurants">
           </div>
           
           <h2 class="title-eng">

@@ -1,162 +1,93 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/home"></ion-back-button>
-        </ion-buttons>
-        <ion-title>Your Cart</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="custom-toolbar">
+        <ion-title class="header-title">ตะกร้าของคุณ</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content>
-      <div v-if="cartStore.items.length === 0" class="ion-padding ion-text-center empty-state">
-        <ion-icon :icon="cartOutline" size="large" color="medium"></ion-icon>
-        <h3>Your cart is empty</h3>
-        <ion-button router-link="/home" fill="outline">Browse Restaurants</ion-button>
-      </div>
 
-      <template v-else>
-        <ion-list>
-          <ion-item-sliding v-for="item in cartStore.items" :key="item.menuItemId">
-            <ion-item>
-              <ion-label>
-                <h2>{{ item.name[locale.value] || item.name['en'] }}</h2>
-                <p>฿{{ item.price }} × {{ item.quantity }}</p>
-              </ion-label>
-              <div slot="end" class="qty-control">
-                <ion-button fill="clear" size="small" @click="decreaseQty(item.menuItemId)">
-                  <ion-icon :icon="removeCircleOutline"></ion-icon>
-                </ion-button>
-                <span>{{ item.quantity }}</span>
-                <ion-button fill="clear" size="small" @click="increaseQty(item.menuItemId)">
-                  <ion-icon :icon="addCircleOutline"></ion-icon>
-                </ion-button>
-              </div>
-              <ion-note slot="end">฿{{ item.price * item.quantity }}</ion-note>
-            </ion-item>
-            <ion-item-options side="end">
-              <ion-item-option color="danger" @click="removeItem(item.menuItemId)">
-                <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
-              </ion-item-option>
-            </ion-item-options>
-          </ion-item-sliding>
-        </ion-list>
-
-        <ion-item lines="none" class="total-row ion-margin-top">
-          <ion-label><strong>Total</strong></ion-label>
-          <ion-note slot="end" class="total-price">฿{{ cartStore.totalPrice }}</ion-note>
-        </ion-item>
-
-        <div class="ion-padding">
-          <ion-button expand="block" :disabled="loading" @click="submitOrder" color="primary">
-            <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-            <span v-else>Submit Order</span>
-          </ion-button>
-          <ion-button expand="block" fill="outline" color="medium" class="ion-margin-top" @click="cartStore.clearCart()">
-            Clear Cart
-          </ion-button>
+    <ion-content :fullscreen="true" class="custom-bg">
+      <div class="cart-container">
+        
+        <div v-if="cartStore.items.length === 0" class="empty-state">
+          <ion-icon :icon="basketOutline" class="empty-icon"></ion-icon>
+          <h2>ตะกร้าว่างเปล่า</h2>
+          <p>คุณยังไม่ได้เลือกเมนูอาหารเลย<br>ลองดูร้านอาหารที่น่าสนใจในหน้าหลักสิ</p>
+          <button class="action-btn" @click="router.push('/home')">ค้นหาร้านอาหาร</button>
         </div>
-      </template>
+
+        <div v-else class="active-cart-state">
+          <div class="preview-card">
+            <div class="preview-header">
+              <ion-icon :icon="restaurantOutline"></ion-icon>
+              <h3>รายการอาหารที่รอสั่ง</h3>
+            </div>
+            
+            <div class="preview-body">
+              <p>คุณมี <strong>{{ cartStore.itemCount }}</strong> รายการในตะกร้า</p>
+              <p>ยอดรวมเบื้องต้น: <strong>{{ cartStore.totalPrice }} THB</strong></p>
+            </div>
+
+            <button class="action-btn checkout-btn" @click="goToCheckout">
+              ดูรายละเอียดและสั่งอาหาร
+            </button>
+          </div>
+        </div>
+
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonBackButton, IonButtons, IonList, IonItem, IonLabel,
-  IonButton, IonSpinner, IonIcon, IonNote,
-  IonItemSliding, IonItemOptions, IonItemOption,
-  toastController
-} from '@ionic/vue';
-import { cartOutline, removeCircleOutline, addCircleOutline, trashOutline } from 'ionicons/icons';
-import { useCartStore } from '../../stores/cartStore';
-import { useUserStore } from '../../stores/userStore';
-import { useQueueStore } from '../../stores/queueStore';
-import { useI18n } from 'vue-i18n';
-import { db } from '../../services/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonIcon } from '@ionic/vue';
+import { basketOutline, restaurantOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import { useCartStore } from '../../stores/cartStore';
 
-const cartStore = useCartStore();
-const userStore = useUserStore();
-const queueStore = useQueueStore();
 const router = useRouter();
-const { locale } = useI18n() as { locale: { value: 'en' | 'th' } };
-const loading = ref(false);
+const cartStore = useCartStore();
 
-const increaseQty = (id: string) => {
-  const item = cartStore.items.find(i => i.menuItemId === id);
-  if (item) item.quantity++;
-};
-
-const decreaseQty = (id: string) => {
-  const item = cartStore.items.find(i => i.menuItemId === id);
-  if (item) {
-    if (item.quantity <= 1) removeItem(id);
-    else item.quantity--;
-  }
-};
-
-const removeItem = (id: string) => {
-  const idx = cartStore.items.findIndex(i => i.menuItemId === id);
-  if (idx !== -1) cartStore.items.splice(idx, 1);
-};
-
-const submitOrder = async () => {
-  if (!userStore.user) return;
-  loading.value = true;
-  try {
-    await addDoc(collection(db, 'orders'), {
-      userId: userStore.user.uid,
-      restaurantId: cartStore.restaurantId,
-      tableId: cartStore.tableId ?? queueStore.activeQueue?.restaurantId ?? null,
-      items: cartStore.items,
-      totalPrice: cartStore.totalPrice,
-      status: 'preparing',
-      createdAt: serverTimestamp()
-    });
-    cartStore.clearCart();
-    const toast = await toastController.create({
-      message: 'Order submitted! Staff will prepare your food.',
-      duration: 2500,
-      color: 'success',
-      position: 'bottom'
-    });
-    await toast.present();
-    router.push('/my-queue');
-  } catch (error) {
-    console.error(error);
-    const toast = await toastController.create({
-      message: 'Failed to submit order. Please try again.',
-      duration: 2500,
-      color: 'danger',
-      position: 'bottom'
-    });
-    await toast.present();
-  } finally {
-    loading.value = false;
+const goToCheckout = () => {
+  // ดึง restaurantId จาก Store (ที่เราเซ็ตไว้ตอนกดเมนู)
+  if (cartStore.restaurantId) {
+    router.push(`/restaurant/${cartStore.restaurantId}/cart`);
   }
 };
 </script>
 
 <style scoped>
-.empty-state {
-  margin-top: 5rem;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Joan&display=swap');
+
+.custom-toolbar { --background: #8b3c3c; --color: white; padding: 5px 0; }
+.header-title { font-family: 'Joan', serif; font-size: 24px; text-align: center; }
+.custom-bg { --background: #f5f5f5; }
+
+.cart-container {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; padding: 20px;
 }
-.qty-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+
+.empty-state { text-align: center; color: #888; }
+.empty-icon { font-size: 80px; color: #ccc; margin-bottom: 10px; }
+.empty-state h2 { font-family: 'Joan', serif; color: #333; margin: 0 0 10px 0; }
+.empty-state p { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; margin-bottom: 25px; }
+
+.active-cart-state { width: 100%; max-width: 400px; }
+.preview-card {
+  background: white; border-radius: 20px; padding: 25px 20px;
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.08); text-align: center;
 }
-.total-row {
-  border-top: 1px solid var(--ion-color-light);
-  padding-top: 0.5rem;
+.preview-header { display: flex; align-items: center; justify-content: center; gap: 10px; color: #9A4444; margin-bottom: 15px; }
+.preview-header ion-icon { font-size: 28px; }
+.preview-header h3 { font-family: 'Joan', serif; margin: 0; font-size: 20px; font-weight: bold; }
+
+.preview-body p { font-family: 'Inter', sans-serif; font-size: 16px; color: #555; margin: 10px 0; }
+.preview-body strong { color: #000; font-size: 18px; }
+
+.action-btn {
+  background: #9A4444; color: white; padding: 12px 30px; border-radius: 30px;
+  font-family: 'Inter', sans-serif; font-size: 16px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px;
 }
-.total-price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--ion-color-primary);
-}
+.checkout-btn { width: 100%; margin-top: 25px; padding: 15px; font-size: 18px; }
+.action-btn:active { transform: scale(0.98); }
 </style>
