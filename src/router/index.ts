@@ -43,11 +43,7 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/customer/HomeView.vue'),
         meta: { customerOnly: true }
       },
-      {
-        path: '/profile',
-        name: 'Profile',
-        component: () => import('../views/ProfileView.vue'),
-      },
+     
       {
         path: '/my-queue',
         name: 'QueueStatus',
@@ -92,6 +88,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'RestaurantDetail',
     component: () => import('../views/customer/RestaurantDetailView.vue'),
     meta: { requiresAuth: true, customerOnly: true }
+  },
+  {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('../views/ProfileView.vue'),
   },
 
   // ==========================================
