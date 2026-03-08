@@ -17,7 +17,7 @@
                 v-model="selectedRole"
               >
                 <ion-select-option value="user">User</ion-select-option>
-                <ion-select-option value="owner">Owner</ion-select-option>
+                <ion-select-option value="owner">Staff</ion-select-option>
               </ion-select>
             </div>
 
@@ -32,15 +32,56 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { IonPage, IonContent, IonSelect, IonSelectOption } from '@ionic/vue';
-import { caretDownSharp } from 'ionicons/icons';
+import { ref } from 'vue'
+import { IonPage, IonContent, IonSelect, IonSelectOption } from '@ionic/vue'
+import { caretDownSharp } from 'ionicons/icons'
+import { getAuth } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
+import { useRouter } from 'vue-router'
 
-const selectedRole = ref('user');
+const router = useRouter()
 
-const handleGetStarted = () => {
-  console.log('Role Selected:', selectedRole.value);
-};
+const selectedRole = ref('user')
+
+const handleGetStarted = async () => {
+  try {
+
+    const auth = getAuth()
+    const user = auth.currentUser
+
+    if (!user) {
+      alert("Please login first")
+      router.push('/login')
+      return
+    }
+
+    // map role
+    const role = selectedRole.value === 'owner' ? 'staff' : 'customer'
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        uid: user.uid,
+        email: user.email,
+        role: role,
+        createdAt: new Date()
+      },
+      { merge: true }
+    )
+
+    // redirect ตาม role
+    if (role === "staff") {
+      router.replace('/staff/dashboard')
+    } else {
+      router.replace('/home')
+    }
+
+  } catch (error) {
+    console.error(error)
+    alert("Failed to set role")
+  }
+}
 </script>
 
 <style>
