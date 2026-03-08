@@ -3,7 +3,7 @@
     <ion-header class="ion-no-border">
       <ion-toolbar class="transparent-toolbar">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/home" color="light"></ion-back-button>
+          <ion-back-button color="light"></ion-back-button>
         </ion-buttons>
         <ion-title class="page-title">รับคิว</ion-title>
       </ion-toolbar>
@@ -24,12 +24,23 @@
             <span class="big-txt">EzyDine</span>
           </div>
 
-          <div class="qr-section">
+          <div class="qr-section" v-if="queueStore.activeQueue && queueStore.activeQueue.status !== 'seated'">
             <qrcode-vue :value="qrValue" :size="200" level="H" class="qr-code" />
             <div class="timer">
               <ion-icon :icon="refreshOutline"></ion-icon>
               <span>5:10</span>
             </div>
+          </div>
+
+          <div class="seated-section" v-else-if="queueStore.activeQueue?.status === 'seated'">
+            <div class="success-icon-wrapper">
+              <ion-icon :icon="checkmarkCircleOutline" class="success-icon"></ion-icon>
+            </div>
+            <h2 class="seated-title">โต๊ะของคุณพร้อมแล้ว!</h2>
+            <p v-if="queueStore.activeQueue.tableNumber" class="table-info">
+              เชิญที่โต๊ะหมายเลข <strong>{{ queueStore.activeQueue.tableNumber }}</strong>
+            </p>
+            <p v-else class="table-info">เชิญที่โต๊ะได้เลยครับ</p>
           </div>
 
           <div class="info-section">
@@ -45,7 +56,7 @@
               </div>
             </div>
 
-            <div class="queue-numbers">
+            <div class="queue-numbers" v-if="queueStore.activeQueue.status !== 'seated'">
               <div class="q-box">
                 <p>หมายเลขคิวของคุณ</p>
                 <h1>{{ queueStore.activeQueue.position }}</h1>
@@ -70,7 +81,11 @@
               </div>
             </div>
 
-            <button class="cancel-btn" @click="cancelQueue" :disabled="cancelling">
+            <button v-if="queueStore.activeQueue.status === 'seated'" class="menu-btn" @click="goToMenu">
+              <span>สั่งอาหารเลย (Order Now)</span>
+            </button>
+
+            <button v-else class="cancel-btn" @click="cancelQueue" :disabled="cancelling">
               <ion-spinner v-if="cancelling" name="crescent" class="btn-spinner"></ion-spinner>
               <span v-else>ยกเลิกการจอง</span>
             </button>
@@ -90,14 +105,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonBackButton, IonButtons, IonSpinner, IonIcon
 } from '@ionic/vue';
 import { 
   ticketOutline, refreshOutline, locationOutline, 
-  calendarOutline, peopleOutline
+  calendarOutline, peopleOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
 import QrcodeVue from 'qrcode.vue';
 import { useQueueStore } from '../../stores/queueStore';
@@ -127,6 +142,18 @@ onMounted(() => {
 
 onUnmounted(() => {
   queueSub?.();
+});
+
+// Watch for status change to 'seated' for auto-redirect
+watch(() => queueStore.activeQueue?.status, (newStatus) => {
+  if (newStatus === 'seated') {
+    // Wait a brief moment to show the seated success UI
+    setTimeout(() => {
+      if (queueStore.activeQueue) {
+        router.push(`/restaurant/${queueStore.activeQueue.restaurantId}/menu`);
+      }
+    }, 2500);
+  }
 });
 
 // คำนวณข้อมูลร้านอาหารของคิวปัจจุบัน
@@ -161,6 +188,11 @@ const cancelQueue = async () => {
   } finally {
     cancelling.value = false;
   }
+};
+
+const goToMenu = () => {
+  if (!queueStore.activeQueue) return;
+  router.push(`/restaurant/${queueStore.activeQueue.restaurantId}/menu`);
 };
 </script>
 
@@ -241,6 +273,44 @@ const cancelQueue = async () => {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   margin-top: 10px;
+}
+
+/* ================= Seated Section ================= */
+.seated-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.success-icon-wrapper {
+  margin-bottom: 15px;
+}
+
+.success-icon {
+  font-size: 80px;
+  color: #2ecc71;
+}
+
+.seated-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2ecc71;
+  margin: 0 0 10px 0;
+}
+
+.table-info {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+}
+
+.table-info strong {
+  font-size: 24px;
+  color: #9A4444;
 }
 
 /* ================= ข้อมูลการจอง ================= */
@@ -370,6 +440,28 @@ const cancelQueue = async () => {
   margin-top: auto; 
 }
 .cancel-btn:active {
+  transform: scale(0.98);
+}
+
+.menu-btn {
+  background: #2ecc71;
+  color: #FFFFFF;
+  width: 100%;
+  height: 50px;
+  border-radius: 30px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0px 4px 10px rgba(46, 204, 113, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin-top: auto; 
+}
+
+.menu-btn:active {
   transform: scale(0.98);
 }
 .btn-spinner {

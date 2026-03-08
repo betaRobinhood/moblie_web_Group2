@@ -56,7 +56,7 @@
             <p>คุณอยู่ในคิวของร้านนี้แล้ว</p>
             <div style="display: flex; justify-content: space-around; margin-top: 10px;">
               <a @click="router.push('/my-queue')" class="link-btn">ดูสถานะคิว</a>
-              <a @click="router.push(`/restaurant/${restaurant.id}/menu`)" class="link-btn">ดูเมนูอาหาร</a>
+              <a v-if="queueStore.activeQueue?.status === 'seated'" @click="router.push(`/restaurant/${restaurant.id}/menu`)" class="link-btn">ดูเมนูอาหาร</a>
             </div>
           </div>
 
@@ -74,8 +74,9 @@
               <ion-icon :icon="peopleOutline" class="input-icon"></ion-icon>
             </div>
 
-            <button class="submit-btn" @click="goToMenu">
-              <span>เลือกเมนูอาหาร</span>
+            <button class="submit-btn" @click="handleJoinQueue" :disabled="queueStore.loading">
+              <ion-spinner v-if="queueStore.loading" name="crescent"></ion-spinner>
+              <span v-else>จองคิว (Join Queue)</span>
             </button>
           </div>
         </div>
@@ -102,6 +103,7 @@ import { db } from '../../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useRestaurantStore } from '../../stores/restaurantStore';
 import { useQueueStore } from '../../stores/queueStore';
+import { useUserStore } from '../../stores/userStore';
 import { useI18n } from 'vue-i18n';
 import type { Restaurant } from '../../models/types';
 
@@ -109,6 +111,7 @@ const route = useRoute();
 const router = useRouter();
 const restaurantStore = useRestaurantStore();
 const queueStore = useQueueStore();
+const userStore = useUserStore();
 
 const i18n = useI18n();
 const locale = i18n?.locale as { value: 'en' | 'th' } | undefined;
@@ -141,13 +144,19 @@ onMounted(async () => {
 
 // ฟังก์ชันกลับหน้าแรก
 const goHome = () => {
-  router.replace('/home'); // ใช้ replace เพื่อเคลียร์ History ไม่ให้กดย้อนกลับมาหน้านี้ได้อีกจากปุ่มมือถือ
+  router.replace('/home');
 };
 
-const goToMenu = () => {
-  if (!restaurant.value) return;
-  sessionStorage.setItem('pendingPartySize', partySize.value.toString());
-  router.push(`/restaurant/${restaurant.value.id}/menu`);
+const handleJoinQueue = async () => {
+  if (!restaurant.value || !userStore.user) return;
+  
+  await queueStore.joinQueue(
+    restaurant.value.id,
+    userStore.user.uid,
+    partySize.value
+  );
+  
+  router.push('/my-queue');
 };
 </script>
 

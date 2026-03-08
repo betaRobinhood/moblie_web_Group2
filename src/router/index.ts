@@ -63,31 +63,35 @@ const routes: Array<RouteRecordRaw> = [
         path: '/notifications',
         name: 'Notifications',
         component: () => import('../views/customer/NotificationsView.vue'),
+      },
+      {
+        path: '/restaurant/:id/order-status',
+        name: 'OrderStatus',
+        component: () => import('../views/customer/OrderStatusView.vue')
+      },
+      {
+        path: '/restaurant/:id/menu',
+        name: 'Menu',
+        component: () => import('../views/customer/MenuView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/restaurant/:id/cart',
+        name: 'RestaurantCart',
+        component: () => import('../views/customer/RestaurantCartView.vue'),
+        meta: { requiresAuth: true }
       }
     ]
   },
 
   // ==========================================
-  // หน้ารายละเอียด (ไม่มี Navbar ด้านล่าง จะได้จอใหญ่ๆ)
+  // หน้ารายละเอียด (ไม่มี Navbar ด้านล่าง จะได้จอใหญ่ๆ เฉพาะตอนเลือกครั้งแรก)
   // ==========================================
   {
     path: '/restaurant/:id',
     name: 'RestaurantDetail',
     component: () => import('../views/customer/RestaurantDetailView.vue'),
     meta: { requiresAuth: true, customerOnly: true }
-  },
-  {
-    path: '/restaurant/:id/menu',
-    name: 'Menu',
-    component: () => import('../views/customer/MenuView.vue'),
-    meta: { requiresAuth: true }
-  },
-
-  {
-    path: '/restaurant/:id/cart',
-    name: 'RestaurantCart',
-    component: () => import('../views/customer/RestaurantCartView.vue'),
-    meta: { requiresAuth: true }
   },
 
   // ==========================================

@@ -1,17 +1,24 @@
 <template>
   <ion-page>
-    <ion-content :fullscreen="true" class="custom-bg">
-      
-      <div class="header-bg">
-        <div class="top-nav">
-          <ion-icon :icon="arrowBackOutline" class="nav-icon" @click="goBack"></ion-icon>
-          
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="transparent-toolbar">
+        <ion-buttons slot="start">
+          <ion-back-button color="light"></ion-back-button>
+        </ion-buttons>
+        <ion-title class="page-title">เมนูอาหาร</ion-title>
+        <ion-buttons slot="end">
           <div class="cart-wrapper" @click="viewCart">
             <ion-icon :icon="cartOutline" class="nav-icon"></ion-icon>
             <span v-if="cartStore.itemCount > 0" class="cart-badge">{{ cartStore.itemCount }}</span>
           </div>
-        </div>
-        <h1 class="greeting-text">Hello {{ userStore.profile?.username || userStore.profile?.firstName || 'User' }}</h1>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content :fullscreen="true" class="custom-bg">
+      <div class="header-bg">
+        <h1 class="greeting-text">เค้าท์นี้ทานอะไรดี? 👋</h1>
+        <p class="sub-greeting">{{ userStore.profile?.username || userStore.profile?.firstName || 'User' }}</p>
       </div>
 
       <div class="main-content">
@@ -64,8 +71,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { IonPage, IonContent, IonIcon, IonSpinner, toastController } from '@ionic/vue';
-import { cartOutline, arrowBackOutline, addOutline } from 'ionicons/icons';
+import { IonPage, IonContent, IonIcon, IonSpinner, toastController, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle } from '@ionic/vue';
+import { cartOutline, addOutline } from 'ionicons/icons';
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../../services/firebase';
 import { collection, getDocs, doc, getDoc, orderBy, query } from 'firebase/firestore';
@@ -115,9 +122,7 @@ onMounted(async () => {
   }
 });
 
-const goBack = () => {
-  router.push(`/restaurant/${restaurantId}`);
-};
+// function removed
 
 const viewCart = () => {
   // กดตะกร้าแล้ววิ่งไปที่หน้า "สรุปคำสั่งซื้อ" (ที่เราเพิ่งสร้าง)
@@ -146,61 +151,35 @@ const addItem = async (item: MenuItem) => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Joan&display=swap');
 
-.custom-bg {
-  --background: #fdfdfd;
-}
+.custom-bg { --background: #fdfdfd; }
+.transparent-toolbar { --background: #9A4444; --border-color: transparent; }
+.page-title { font-family: 'Inter', sans-serif; font-size: 16px; color: #FFFFFF; }
 
-/* ================= Header ไล่สี ================= */
+/* ================= Header ดีไซน์ใหม่ ================= */
 .header-bg {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  background: linear-gradient(180deg, #9A4444 26%, #AD523F 46%, #C86637 68.17%, #DD7631 100%);
+  padding: 20px 20px 40px 20px;
+  background: linear-gradient(180deg, #9A4444 0%, #AD523F 100%);
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;
-  padding: 40px 20px 0 20px;
-  z-index: 1;
-}
-
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-icon {
-  font-size: 32px;
-  color: #FFFFFF;
-  cursor: pointer;
-}
-
-.cart-wrapper {
-  position: relative;
-}
-
-.cart-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #000;
-  color: #FFF;
-  font-size: 12px;
-  font-weight: bold;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  color: white;
 }
 
 .greeting-text {
   font-family: 'Joan', serif;
-  font-size: 32px;
-  color: #FFFFFF;
-  margin-top: 15px;
-  font-weight: 400;
+  font-size: 28px;
+  margin: 0;
 }
+
+.sub-greeting {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  opacity: 0.8;
+  margin: 5px 0 0 0;
+}
+
+.cart-wrapper { position: relative; cursor: pointer; padding: 5px; }
+.nav-icon { font-size: 28px; color: #FFFFFF; }
+.cart-badge { position: absolute; top: 0; right: 0; background: #000; color: #FFF; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #9A4444; }
 
 /* ================= เนื้อหาหลัก ================= */
 .main-content {

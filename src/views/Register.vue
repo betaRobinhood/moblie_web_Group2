@@ -31,7 +31,7 @@
 import { ref } from 'vue';
 import { IonPage, IonContent, IonInput } from '@ionic/vue';
 import { useRouter } from 'vue-router';
-import { registerService } from '../services/authService.ts';
+import { registerService } from '../services/authService';
 
 const router = useRouter();
 const username = ref('');

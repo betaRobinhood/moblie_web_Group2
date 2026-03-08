@@ -29,7 +29,7 @@ export const useQueueStore = defineStore('queue', {
             const q = query(
                 collection(db, 'queues'),
                 where('userId', '==', userId),
-                where('status', 'in', ['waiting', 'called']),
+                where('status', 'in', ['waiting', 'called', 'seated']),
                 orderBy('createdAt', 'desc'),
                 limit(1)
             );

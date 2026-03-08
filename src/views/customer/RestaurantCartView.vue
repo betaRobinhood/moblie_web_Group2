@@ -53,12 +53,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonPage, IonContent, IonIcon, IonSpinner, alertController } from '@ionic/vue';
+import { IonPage, IonContent, IonIcon, IonSpinner, toastController } from '@ionic/vue';
 import { arrowBackCircleOutline, trashOutline } from 'ionicons/icons';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '../../stores/cartStore';
 import { useQueueStore } from '../../stores/queueStore';
 import { useUserStore } from '../../stores/userStore';
+import { useOrderStore } from '../../stores/orderStore';
 import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
@@ -66,6 +67,7 @@ const route = useRoute();
 const cartStore = useCartStore();
 const queueStore = useQueueStore();
 const userStore = useUserStore();
+const orderStore = useOrderStore();
 
 const i18n = useI18n();
 const locale = i18n?.locale as { value: 'en' | 'th' } | undefined;
@@ -82,33 +84,41 @@ const confirmOrder = async () => {
     return;
   }
 
+  if (!queueStore.activeQueue || !queueStore.activeQueue.tableId) {
+    alert("ขออภัย ไม่พบมูลโต๊ะของคุณ กรุณาติดต่อพนักงาน");
+    return;
+  }
+
   isConfirming.value = true;
   const restaurantId = route.params.id as string;
-  // ดึงจำนวนคนที่จำไว้จาก Session ถ้าไม่มีค่าให้เป็น 1
-  const partySize = parseInt(sessionStorage.getItem('pendingPartySize') || '1');
 
   try {
-    // 1. เรียก API จองคิวตรงนี้! (รอจนจองคิวสำเร็จ)
-    await queueStore.joinQueue(restaurantId, userStore.user.uid, partySize);
+    // 1. ส่งออเดอร์เข้า Firebase
+    const result = await orderStore.placeOrder(
+      restaurantId, 
+      userStore.user.uid, 
+      queueStore.activeQueue.tableId,
+      queueStore.activeQueue.tableNumber || 0,
+      cartStore.items,
+      cartStore.totalPrice
+    );
     
-    // 2. ถ้ามี API ส่งออเดอร์เข้า Firebase เพิ่มตรงนี้ได้เลย
-    // await orderStore.placeOrder(restaurantId, cartStore.items, ...);
-
-    const alert = await alertController.create({
-      header: 'สั่งอาหารสำเร็จ',
-      message: 'ห้องครัวได้รับออร์เดอร์และดำเนินการจองคิวให้คุณเรียบร้อยแล้ว',
-      buttons: [{
-        text: 'ดูสถานะคิว',
-        handler: () => {
-          cartStore.clearCart(); // สั่งเสร็จล้างตะกร้า
-          sessionStorage.removeItem('pendingPartySize'); // ล้างจำนวนคนชั่วคราว
-          router.push('/my-queue'); // เด้งไปหน้าตั๋วคิว
-        }
-      }]
-    });
-    await alert.present();
+    if (result.success) {
+      cartStore.clearCart(); 
+      router.push(`/restaurant/${restaurantId}/order-status`); 
+      
+      const toast = await toastController.create({
+        message: 'สั่งอาหารสำเร็จ! ห้องครัวกำลังเตรียมอาหารให้คุณครับ',
+        duration: 2500,
+        color: 'success',
+        position: 'top'
+      });
+      await toast.present();
+    } else {
+      throw new Error("Failed to place order");
+    }
   } catch (error) {
-    console.error("Error placing order/queue", error);
+    console.error("Error placing order", error);
     alert("เกิดข้อผิดพลาดในการทำรายการ กรุณาลองใหม่อีกครั้ง");
   } finally {
     isConfirming.value = false;

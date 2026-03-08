@@ -94,11 +94,13 @@ import { db } from '../../services/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { uploadToCloudinary } from '../../services/cloudinary';
 import type { Restaurant } from '../../models/types';
+import { useUserStore } from '../../stores/userStore';
 
 const restaurant = ref<Restaurant | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const saving = ref(false);
-const restaurantId = 'DEMO_REST_ID'; // Ideally from auth context
+const userStore = useUserStore();
+const restaurantId = userStore.profile?.restaurantId || 'DEMO_REST_ID';
 
 onMounted(async () => {
   const docRef = doc(db, 'restaurants', restaurantId);

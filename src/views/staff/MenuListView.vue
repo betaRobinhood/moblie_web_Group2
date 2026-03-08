@@ -88,8 +88,10 @@ import { db } from '../../services/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { uploadToCloudinary } from '../../services/cloudinary';
 import type { MenuItem } from '../../models/types';
+import { useUserStore } from '../../stores/userStore';
 
-const restaurantId = 'DEMO_REST_ID';
+const userStore = useUserStore();
+const restaurantId = userStore.profile?.restaurantId || 'DEMO_REST_ID';
 const menuItems = ref<MenuItem[]>([]);
 const showModal = ref(false);
 const editingItem = ref<MenuItem | null>(null);

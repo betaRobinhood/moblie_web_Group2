@@ -23,6 +23,8 @@ export interface QueueEntry {
     createdAt: any; // Timestamp
     estimatedWaitTime: number; // in minutes
     partySize: number;
+    tableId?: string;
+    tableNumber?: number;
 }
 
 export interface MenuItem {
@@ -39,7 +41,8 @@ export interface Order {
     userId: string;
     restaurantId: string;
     tableId: string;
-    status: 'ordering' | 'preparing' | 'served' | 'completed';
+    tableNumber?: number;
+    status: 'ordering' | 'preparing' | 'ready' | 'served' | 'completed';
     items: OrderItem[];
     totalPrice: number;
     createdAt: any;

@@ -24,12 +24,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonBackButton, IonButtons, toastController
+  IonBackButton, IonButtons, modalController, toastController
 } from '@ionic/vue';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useRouter } from 'vue-router';
+import TablePickerModal from '../../components/TablePickerModal.vue';
+import CheckoutModal from '../../components/CheckoutModal.vue';
 import { db } from '../../services/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 
 const router = useRouter();
 const scanning = ref(true);
@@ -66,37 +68,90 @@ const onScanSuccess = async (decodedText: string) => {
 
   try {
     const data = JSON.parse(decodedText);
-    if (!data.qid) {
-      errorMsg.value = 'Invalid QR code format.';
+    const userId = data.uid || data.userId;
+    const restaurantId = data.rid || data.restaurantId;
+    const queueId = data.qid || data.queueId;
+    
+    if (!userId || !restaurantId) {
+      errorMsg.value = 'Invalid QR format: missing UI or RI';
       return;
     }
     
     scanning.value = false;
+    if (html5QrCode?.isScanning) await html5QrCode.stop();
+
+    let queueData: any = null;
+
+    if (queueId) {
+      // Direct lookup by ID is most efficient
+      const docSnap = await getDoc(doc(db, 'queues', queueId));
+      if (docSnap.exists()) {
+        queueData = { id: docSnap.id, ...docSnap.data() };
+      }
+    }
+
+    if (!queueData) {
+      // Fallback to query
+      const q = query(
+        collection(db, 'queues'),
+        where('userId', '==', userId),
+        where('restaurantId', '==', restaurantId),
+        where('status', 'in', ['waiting', 'called', 'seated']),
+        limit(1) // Remove orderBy to avoid index requirement
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const queueDoc = snap.docs[0];
+        queueData = { id: queueDoc.id, ...queueDoc.data() };
+      }
+    }
     
-    if (html5QrCode?.isScanning) {
-      await html5QrCode.stop();
+    if (!queueData) {
+      const toast = await toastController.create({
+        message: 'No active queue found for this user.',
+        duration: 3000,
+        color: 'warning',
+        position: 'top'
+      });
+      await toast.present();
+      router.push('/staff/dashboard');
+      return;
     }
 
-    await updateDoc(doc(db, 'queues', data.qid), {
-      status: 'seated',
-      seatedAt: new Date()
-    });
-
-    const toast = await toastController.create({
-      message: 'Customer checked in successfully!',
-      duration: 2000,
-      color: 'success',
-      position: 'top'
-    });
-    await toast.present();
-
-    setTimeout(() => router.push('/staff/dashboard'), 1000);
-  } catch (e) {
-    console.error('QR scan error', e);
-    // If it's not valid JSON, it's just a wrong QR
-    if (e instanceof SyntaxError) {
-      errorMsg.value = 'Invalid QR code content.';
+    if (queueData.status === 'seated') {
+      // Show Checkout Modal
+      const modal = await modalController.create({
+        component: CheckoutModal,
+        componentProps: {
+          restaurantId: queueData.restaurantId,
+          userId: queueData.userId,
+          tableNumber: queueData.tableNumber,
+          tableId: queueData.tableId,
+          queueId: queueData.id
+        }
+      });
+      await modal.present();
+      await modal.onWillDismiss();
+      router.push('/staff/dashboard');
+    } else {
+      // Show Table Assignment Modal
+      const modal = await modalController.create({
+        component: TablePickerModal,
+        componentProps: {
+          restaurantId: queueData.restaurantId,
+          queueId: queueData.id
+        },
+        breakpoints: [0, 0.5, 0.9],
+        initialBreakpoint: 0.5
+      });
+      await modal.present();
+      await modal.onWillDismiss();
+      router.push('/staff/dashboard');
     }
+  } catch (e: any) {
+    console.error('QR scan processing error', e);
+    errorMsg.value = `Scan error: ${e.message || 'Unknown error'}`;
+    scanning.value = true;
   }
 };
 </script>
