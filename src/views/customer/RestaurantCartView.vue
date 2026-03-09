@@ -97,6 +97,7 @@ const confirmOrder = async () => {
     const result = await orderStore.placeOrder(
       restaurantId, 
       userStore.user.uid, 
+      queueStore.activeQueue.id,
       queueStore.activeQueue.tableId,
       queueStore.activeQueue.tableNumber || 0,
       cartStore.items,

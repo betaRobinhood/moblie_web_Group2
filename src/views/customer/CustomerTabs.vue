@@ -26,8 +26,8 @@
         </ion-tab-button>
         
         <ion-tab-button tab="notifications" href="/notifications">
-          <ion-icon :icon="notifications"></ion-icon>
-          <ion-label>แจ้งเตือน</ion-label>
+          <ion-icon :icon="receiptOutline"></ion-icon>
+          <ion-label>ประวัติใช้งาน</ion-label>
         </ion-tab-button>
         
         <ion-tab-button tab="profile" href="/profile">
@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, modalController } from '@ionic/vue';
-import { home, time, basket, notifications, person, fastFood } from 'ionicons/icons';
+import { home, time, basket, receiptOutline, person, fastFood } from 'ionicons/icons';
 
 // นำเข้า Store เพื่อดึงข้อมูลคิวแบบ Real-time
 import { useQueueStore } from '../../stores/queueStore';
@@ -71,7 +71,7 @@ watch(() => queueStore.activeQueue?.status, async (newStatus, oldStatus) => {
     const modal = await modalController.create({
       component: QueueCallModal,
       componentProps: {
-        queueNumber: queueStore.activeQueue?.position || '?'
+        queueNumber: queueStore.activeQueue?.position ?? '?'
       }
     });
     await modal.present();

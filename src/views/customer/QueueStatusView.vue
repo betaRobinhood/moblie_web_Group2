@@ -64,7 +64,7 @@
               <div class="q-divider"></div>
               <div class="q-box">
                 <p>คิวปัจจุบัน</p>
-                <h1>{{ queueStore.activeQueue.position }}</h1> 
+                <h1>{{ queueStore.currentCallingQueue?.position || '-' }}</h1> 
               </div>
             </div>
 
@@ -132,17 +132,27 @@ const i18n = useI18n();
 const locale = i18n?.locale as { value: 'en' | 'th' } | undefined;
 
 const cancelling = ref(false);
-let queueSub: (() => void) | null = null;
+let userQueueSub: (() => void) | null = null;
+let restaurantQueueSub: (() => void) | null = null;
 
 onMounted(() => {
   if (userStore.user) {
-    queueSub = queueStore.subscribeToUserQueue(userStore.user.uid);
+    userQueueSub = queueStore.subscribeToUserQueue(userStore.user.uid);
   }
 });
 
 onUnmounted(() => {
-  queueSub?.();
+  userQueueSub?.();
+  restaurantQueueSub?.();
 });
+
+// Watch for activeQueue to change, then subscribe to that restaurant's calling queue
+watch(() => queueStore.activeQueue?.restaurantId, (newRid) => {
+  restaurantQueueSub?.();
+  if (newRid) {
+    restaurantQueueSub = queueStore.subscribeToRestaurantQueue(newRid);
+  }
+}, { immediate: true });
 
 // Watch for status change to 'seated' for auto-redirect
 watch(() => queueStore.activeQueue?.status, (newStatus) => {

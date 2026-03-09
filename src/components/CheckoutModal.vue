@@ -116,7 +116,11 @@ const confirmCheckout = async () => {
 
     // 2. Mark queue as completed
     const queueRef = doc(db, 'queues', props.queueId);
-    batch.update(queueRef, { status: 'completed', completedAt: serverTimestamp() });
+    batch.update(queueRef, { 
+      status: 'completed', 
+      completedAt: serverTimestamp(),
+      totalAmount: totalAmount.value
+    });
 
     // 3. Mark table as available
     const tableRef = doc(db, `restaurants/${props.restaurantId}/tables`, props.tableId);

@@ -13,12 +13,13 @@ export const useOrderStore = defineStore('order', {
         loading: false
     }),
     actions: {
-        async placeOrder(restaurantId: string, userId: string, tableId: string, tableNumber: number, items: OrderItem[], totalPrice: number) {
+        async placeOrder(restaurantId: string, userId: string, queueId: string, tableId: string, tableNumber: number, items: OrderItem[], totalPrice: number) {
             this.loading = true;
             try {
                 const orderData = {
                     restaurantId,
                     userId,
+                    queueId,
                     tableId,
                     tableNumber,
                     items,

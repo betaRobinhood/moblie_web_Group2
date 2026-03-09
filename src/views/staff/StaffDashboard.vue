@@ -70,6 +70,9 @@
             </ion-item>
             
             <ion-item-options side="end">
+              <ion-item-option v-if="q.status === 'called'" color="tertiary" @click="manualSeat(q)" class="action-opt">
+                <ion-icon :icon="logInOutline" slot="icon-only" class="opt-icon"></ion-icon>
+              </ion-item-option>
               <ion-item-option color="success" @click="callCustomer(q.id)" class="action-opt">
                 <ion-icon :icon="callOutline" slot="icon-only" class="opt-icon"></ion-icon>
               </ion-item-option>
@@ -153,9 +156,9 @@
             <button
               v-if="table.occupied"
               class="free-btn"
-              @click.stop="freeTable(table)"
+              @click.stop="manualCheckout(table)"
             >
-              Free Table
+              Check Out
             </button>
           </div>
         </div>
@@ -188,11 +191,11 @@ import {
 import {
   qrCodeOutline, settingsOutline, callOutline, playSkipForwardOutline,
   peopleOutline, personCircleOutline, gridOutline, addOutline, fastFoodOutline,
-  checkmarkDoneOutline, restaurantOutline
+  checkmarkDoneOutline, restaurantOutline, logInOutline
 } from 'ionicons/icons';
 import { db } from '../../services/firebase';
 import {
-  collection, query, where, orderBy, onSnapshot, doc, updateDoc
+  collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDoc
 } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 import type { QueueEntry } from '../../models/types';
@@ -200,6 +203,8 @@ import { useUserStore } from '../../stores/userStore';
 import { useOrderStore } from '../../stores/orderStore';
 import { useI18n } from 'vue-i18n';
 import QueueToTableModal from '../../components/QueueToTableModal.vue';
+import TablePickerModal from '../../components/TablePickerModal.vue';
+import CheckoutModal from '../../components/CheckoutModal.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -342,18 +347,52 @@ const handleTableClick = async (table: any) => {
   await modal.present();
 };
 
-const freeTable = async (table: any) => {
-  await updateDoc(doc(db, `restaurants/${restaurantId.value}/tables`, table.id), {
-    occupied: false,
-    currentQueueId: null
+const manualSeat = async (queue: QueueEntry) => {
+  const modal = await modalController.create({
+    component: TablePickerModal,
+    componentProps: {
+      restaurantId: restaurantId.value,
+      queueId: queue.id
+    },
+    breakpoints: [0, 0.5, 0.9],
+    initialBreakpoint: 0.5
   });
-  const toast = await toastController.create({
-    message: `Table ${table.number} is now available.`,
-    duration: 2000,
-    color: 'success',
-    position: 'bottom'
-  });
-  await toast.present();
+  await modal.present();
+};
+
+const manualCheckout = async (table: any) => {
+  if (!table.occupied || !table.currentQueueId) return;
+
+  try {
+    const queueId = table.currentQueueId;
+    const queueSnap = await getDoc(doc(db, 'queues', queueId));
+    
+    if (!queueSnap.exists()) {
+      const toast = await toastController.create({
+        message: 'Could not find active session for this table.',
+        duration: 2000,
+        color: 'danger'
+      });
+      await toast.present();
+      return;
+    }
+
+    const queueData = queueSnap.data() as any;
+
+    const modal = await modalController.create({
+      component: CheckoutModal,
+      componentProps: {
+        restaurantId: restaurantId.value,
+        userId: queueData.userId,
+        tableNumber: table.number,
+        tableId: table.id,
+        queueId: queueId
+      }
+    });
+    await modal.present();
+  } catch (e) {
+    console.error('Manual checkout error', e);
+  }
 };
 </script>
 

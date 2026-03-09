@@ -60,6 +60,16 @@
             </div>
           </div>
 
+          <div v-else-if="restaurant.id.startsWith('mock-res-')" class="action-section">
+            <div class="mock-info">
+              <ion-icon :icon="timeOutline"></ion-icon>
+              <p>ร้านอาหารนี้เข้าร่วมโครงการในอนาคต (Demo Only)</p>
+            </div>
+            <button class="submit-btn disabled-btn" disabled>
+              <span>ไม่เปิดจองในรุ่นทดสอบ</span>
+            </button>
+          </div>
+
           <div v-else class="action-section">
             <h3 class="input-label">Party Size (จำนวนคน)</h3>
             <div class="input-wrapper">
@@ -152,6 +162,7 @@ const handleJoinQueue = async () => {
   
   await queueStore.joinQueue(
     restaurant.value.id,
+    restaurant.value.name[locale?.value || 'en'] || restaurant.value.name['en'],
     userStore.user.uid,
     partySize.value
   );
@@ -198,4 +209,9 @@ const handleJoinQueue = async () => {
 .loading-container, .not-found-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
 .custom-spinner { color: #8b3c3c; width: 40px; height: 40px; }
 .outline-btn { background: transparent; border: 2px solid #8b3c3c; color: #8b3c3c; box-shadow: none; margin-top: 20px; width: auto; }
+.disabled-btn { background: #95a5a6; color: #eee; cursor: not-allowed; box-shadow: none; }
+.disabled-btn:active { transform: none; }
+
+.mock-info { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border: 1px dashed #ccc; padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #666; font-family: 'Inter', sans-serif; font-size: 14px; text-align: center; justify-content: center; width: 100%; }
+.mock-info ion-icon { font-size: 20px; color: #95a5a6; }
 </style>
